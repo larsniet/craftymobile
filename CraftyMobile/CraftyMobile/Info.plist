@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>CraftyMobile uses Face ID to lock the app and protect your saved server token.</string>
+	<!-- Background server-status alerts (BGAppRefreshTask + local notifications). -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.larsniet.CraftyMobile.refresh</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<!--
+	  App Transport Security exception.
+	  Crafty is commonly self-hosted with a self-signed certificate (and is
+	  sometimes reached over plain HTTP on a LAN). NSAllowsArbitraryLoads lets
+	  the app connect to such endpoints. Actual self-signed *trust* is handled
+	  at runtime by the URLSession delegate, gated behind the "Allow self-signed
+	  certificates" setting. This is acceptable for a personal, sideloaded app.
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

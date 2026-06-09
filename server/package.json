@@ -1,0 +1,13 @@
+{
+  "name": "crafty-push",
+  "version": "1.0.0",
+  "description": "Companion push server for the CraftyMobile app — polls Crafty Controller and sends APNs pushes for live widget updates and instant alerts.",
+  "main": "crafty-push.js",
+  "scripts": {
+    "start": "node crafty-push.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
