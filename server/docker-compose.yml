@@ -1,0 +1,52 @@
+# Example: run crafty-push as a sidecar to Crafty Controller.
+#
+# If you already run Crafty in Docker, you can just add the `crafty-push`
+# service (and the shared network) to your existing compose file.
+#
+# Setup:
+#   1. cp .env.example .env   and fill it in  (CRAFTY_*, APNS_KEY_ID, etc.)
+#   2. Put your APNs key next to this file as  AuthKey.p8
+#   3. docker compose up -d
+#
+# The phone reaches crafty-push on :8099 (expose it the same way you reach
+# Crafty — LAN, reverse proxy, or VPN). Then in the app:
+#   Settings → Live updates (push) → URL = http://<your-host>:8099
+
+services:
+  # --- Your existing Crafty service (shown for reference) -------------------
+  # crafty:
+  #   image: registry.gitlab.com/crafty-controller/crafty-4:latest
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8443:8443"      # web/API
+  #     - "25500-25600:25500-25600"
+  #   volumes:
+  #     - ./crafty/servers:/crafty/servers
+  #     # ...your Crafty volumes...
+  #   networks: [crafty-net]
+
+  crafty-push:
+    image: ghcr.io/larsniet/crafty-push:latest
+    # To build from source instead of pulling, comment `image:` and use:
+    # build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Inside one compose network, point at the crafty service by name:
+      #   CRAFTY_URL: https://crafty:8443
+      # (otherwise CRAFTY_URL from .env / your external URL is used)
+      TOKENS_FILE: /data/tokens.json
+      APNS_KEY_PATH: /run/secrets/apns_key.p8
+    volumes:
+      - pushdata:/data
+      - ./AuthKey.p8:/run/secrets/apns_key.p8:ro
+    ports:
+      - "8099:8099"
+    networks: [crafty-net]
+
+volumes:
+  pushdata:
+
+networks:
+  crafty-net:
+    driver: bridge

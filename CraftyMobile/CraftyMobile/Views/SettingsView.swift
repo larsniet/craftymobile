@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct SettingsView: View {
     @EnvironmentObject private var settings: AppSettings
@@ -153,10 +154,10 @@ struct SettingsView: View {
 
                 if settings.pushEnabled {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Push server URL")
+                        Text("Relay URL")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        TextField("https://crafty.example.com:8099", text: $settings.pushServerURLString)
+                        TextField("https://crafty-relay.you.workers.dev", text: $settings.pushServerURLString)
                             .font(.system(.body, design: .monospaced))
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
@@ -179,6 +180,32 @@ struct SettingsView: View {
                         }
                     }
                     .font(.subheadline)
+
+                    // Once registered, show the webhook URL to paste into Crafty.
+                    if let hook = settings.craftyWebhookURL {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Crafty webhook URL")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(hook)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.primary)
+                                .textSelection(.enabled)
+                                .lineLimit(2)
+                                .truncationMode(.middle)
+                            Button {
+                                UIPasteboard.general.string = hook
+                                Haptics.success()
+                            } label: {
+                                Label("Copy webhook URL", systemImage: "doc.on.doc")
+                                    .font(.caption.weight(.semibold))
+                            }
+                            Text("Paste this into Crafty → Webhooks for your servers’ start/stop/crash events.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 2)
+                    }
                 }
 
                 if let note = pushNote {
@@ -187,7 +214,7 @@ struct SettingsView: View {
             } header: {
                 Text("Live updates")
             } footer: {
-                Text("Requires the companion push server (see the project README) running next to Crafty, plus a one-time Apple Push Notifications key. Status changes (up/down/crash) arrive instantly; routine widget refreshes are as frequent as Apple allows.")
+                Text("Point this at your Cloudflare relay (see relay/README.md), then paste the webhook URL into Crafty. Status changes (up/down/crash) arrive instantly; the relay never sees your Crafty token.")
             }
 
             Section {

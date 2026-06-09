@@ -1,0 +1,14 @@
+# Keep secrets and local state out of the image
+.env
+.env.*
+*.p8
+tokens.json
+data/
+node_modules/
+
+# Docs / build files not needed at runtime
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.example.yml

@@ -54,6 +54,41 @@ Check it's alive: `curl http://localhost:8099/health`
 Keep it running (e.g. `pm2 start crafty-push.js`, a `systemd` unit, or
 `screen`/`tmux`). It's lightweight and can live on the same box as Crafty.
 
+## Run with Docker (recommended)
+
+A prebuilt, multi-arch image is published to GitHub Container Registry
+(replace `OWNER` with the GitHub account that owns this repo):
+
+```sh
+docker pull ghcr.io/OWNER/crafty-push:latest
+```
+
+Run it as a **sidecar next to Crafty** with the included compose file:
+
+```sh
+cd server
+cp .env.example .env          # fill in CRAFTY_* and APNS_KEY_ID / APNS_TEAM_ID
+cp /path/to/AuthKey_XXXX.p8 ./AuthKey.p8   # your APNs key
+docker compose up -d
+docker compose logs -f crafty-push
+```
+
+The compose file mounts `AuthKey.p8` read-only, persists device tokens in a
+named volume, and exposes port `8099`. In `.env` you don't need `APNS_KEY_PATH`
+or `TOKENS_FILE` — the compose file sets those to the in-container paths.
+
+- **Same compose as Crafty?** Put both services on one network and set
+  `CRAFTY_URL=https://crafty:8443` (the service name). Otherwise use your
+  external Crafty URL.
+- **Config is per-user.** The image is generic; your `.env` + your `AuthKey.p8`
+  make it yours. Nothing secret is baked into the image.
+
+Build it yourself instead of pulling:
+
+```sh
+cd server && docker build -t crafty-push .
+```
+
 ## Point the app at it
 
 In the app: **Settings → Live updates (push)** → turn on, and set **Push server

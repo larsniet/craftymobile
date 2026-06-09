@@ -134,23 +134,37 @@ e -l objc -- (void)[[BGTaskScheduler sharedScheduler] _simulateLaunchForTaskWith
 
 ## Live updates (push)
 
-For near-real-time widget data and **instant** crash/recovery alerts (instead of
-iOS's slow background schedule), run the companion **[push server](server/README.md)**
-next to Crafty. It polls Crafty and pushes changes to your phone via APNs.
+For **instant** crash/recovery alerts and a fresh widget (instead of iOS's slow
+background schedule), there are two ways to add push — pick one:
 
-One-time setup:
+**A. Cloudflare Worker relay — recommended (zero-maintenance, ~free, private).**
+A tiny serverless relay turns a plain Crafty webhook into an Apple push. It
+**never sees your Crafty URL or token**, scales to zero, and costs nothing at
+homelab volume. You deploy it once with one command. See
+**[relay/README.md](relay/README.md)**.
+
+```
+App ─register▶ relay ─returns code▶  paste https://<relay>/hook/<code> into Crafty
+Crafty ─event▶ relay ─APNs▶ phone    (widget then fetches Crafty directly on-device)
+```
+
+**B. Self-hosted Node poller (Docker).** A small service that polls Crafty and
+pushes directly. Fully self-hosted, but it holds your Crafty token and you run a
+container. See **[server/README.md](server/README.md)**.
+
+One-time setup (both options):
 
 1. Create an **APNs Auth Key (.p8)** at developer.apple.com (Keys → APNs).
 2. In Xcode: **CraftyMobile** target → **Signing & Capabilities** →
    **+ Capability → Push Notifications** (the `aps-environment` entitlement is
    already in the project).
-3. Configure and run the server — see **[server/README.md](server/README.md)**.
-4. In the app: **Settings → Live updates (push)** → enable and enter the server
-   URL. "Device registered" flips to **Yes** once it's talking to the server.
+3. Deploy the relay (A) or run the server (B).
+4. In the app: **Settings → Live updates (push)** → enter the relay/server URL.
+   For the relay, copy the shown **Crafty webhook URL** into Crafty → Webhooks.
 
-> Honest limits: *alert* pushes (up/down/crash) are instant. *Silent* widget
-> refreshes are throttled by Apple to a few per hour — so the widget is always
-> current for status changes, and as fresh as Apple allows otherwise. This is the
+> Honest limits: *alert* pushes (up/down/crash) are instant. Apple throttles
+> background/silent widget refreshes to a few per hour, so the widget is always
+> current for status changes and as fresh as Apple allows otherwise. This is the
 > only way to beat iOS's widget/background throttling without opening the app.
 
 ## Project structure
@@ -181,11 +195,20 @@ crafty/                             # repo root
 │     ├─ Info.plist                 # WidgetKit extension point + ATS exception
 │     ├─ CraftyWidget.entitlements  # App Group (same group as the app)
 │     └─ Assets.xcassets/           # accent color
-└─ server/                          # companion push server (Node, no deps)
+├─ relay/                           # push option A: Cloudflare Worker (recommended)
+│  ├─ src/worker.js                 # zero-knowledge APNs relay (webhook → push)
+│  ├─ wrangler.toml                 # Worker config (KV + vars)
+│  ├─ setup.sh                      # one-command deploy
+│  └─ README.md                     # deploy guide
+└─ server/                          # push option B: self-hosted Node poller (Docker)
    ├─ crafty-push.js                # poll Crafty → APNs alert/silent pushes
    ├─ package.json
+   ├─ Dockerfile                    # tiny Alpine image (no install step)
+   ├─ docker-compose.yml            # run as a sidecar next to Crafty
    ├─ .env.example                  # configuration template
-   └─ README.md                     # push setup guide
+   └─ README.md                     # push + Docker setup guide
+
+# (.github/workflows/docker-publish.yml builds + pushes the server image to GHCR)
 ```
 
 ## Notes on the tricky bits

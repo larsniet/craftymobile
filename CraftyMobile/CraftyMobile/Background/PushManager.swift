@@ -34,9 +34,9 @@ final class PushManager: NSObject, @unchecked Sendable {
         NSLog("CraftyMobile push registration failed: \(error.localizedDescription)")
     }
 
-    /// POST the token to the push server's /register endpoint so it knows where
-    /// to deliver. Tolerates a self-signed server cert (homelab) when the user
-    /// has that option enabled.
+    /// POST the token to the relay's /register endpoint. Sends the existing
+    /// pairing code (if any) so it stays stable, and stores the code the relay
+    /// returns. Tolerates a self-signed cert when the user enabled that option.
     private func sendTokenToServer(_ token: String) async {
         guard let base = settings.pushServerURL else { return }
         let url = base.appendingPathComponent("register")
@@ -44,10 +44,12 @@ final class PushManager: NSObject, @unchecked Sendable {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "token": token,
             "bundleId": Bundle.main.bundleIdentifier ?? "",
         ]
+        let existing = await MainActor.run { settings.pairingCode }
+        if !existing.isEmpty { body["code"] = existing }
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         let session = URLSession(
@@ -55,7 +57,12 @@ final class PushManager: NSObject, @unchecked Sendable {
             delegate: settings.allowSelfSigned ? TrustAllDelegate() : nil,
             delegateQueue: nil
         )
-        _ = try? await session.data(for: req)
+        guard let (data, _) = try? await session.data(for: req) else { return }
+        // The relay returns a pairing code; a plain poll-server won't (that's fine).
+        if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let code = obj["code"] as? String, !code.isEmpty {
+            await MainActor.run { settings.pairingCode = code }
+        }
     }
 }
 

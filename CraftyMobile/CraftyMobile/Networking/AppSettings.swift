@@ -33,6 +33,7 @@ final class AppSettings: ObservableObject, @unchecked Sendable {
         static let pushEnabled = "pushEnabled"
         static let pushServerURL = "pushServerURL"
         static let deviceToken = "deviceToken"
+        static let pairingCode = "pairingCode"
         static let commandHistory = "commandHistory"
         static let didMigrate = "didMigrateToAppGroup_v1"
     }
@@ -84,6 +85,13 @@ final class AppSettings: ObservableObject, @unchecked Sendable {
         didSet { defaults.set(deviceToken, forKey: Keys.deviceToken) }
     }
 
+    /// Pairing code returned by the relay. The user pastes `<relay>/hook/<code>`
+    /// into Crafty's webhook config. Persisted so the code (and thus the webhook
+    /// URL) stays stable across token refreshes and reinstalls.
+    @Published var pairingCode: String {
+        didSet { defaults.set(pairingCode, forKey: Keys.pairingCode) }
+    }
+
     private init() {
         let defaults = UserDefaults(suiteName: appGroupID) ?? .standard
         self.defaults = defaults
@@ -99,6 +107,13 @@ final class AppSettings: ObservableObject, @unchecked Sendable {
         self.pushEnabled = (defaults.object(forKey: Keys.pushEnabled) as? Bool) ?? false
         self.pushServerURLString = defaults.string(forKey: Keys.pushServerURL) ?? ""
         self.deviceToken = defaults.string(forKey: Keys.deviceToken) ?? ""
+        self.pairingCode = defaults.string(forKey: Keys.pairingCode) ?? ""
+    }
+
+    /// The webhook URL the user pastes into Crafty (relay URL + /hook/<code>).
+    var craftyWebhookURL: String? {
+        guard let base = pushServerURL, !pairingCode.isEmpty else { return nil }
+        return base.appendingPathComponent("hook").appendingPathComponent(pairingCode).absoluteString
     }
 
     /// Normalized push-server base URL (trailing slash removed), or nil.

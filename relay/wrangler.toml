@@ -1,0 +1,20 @@
+name = "crafty-relay"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+
+# Non-secret config. The bundle id must match the app; APNS_ENV is "sandbox" for
+# sideloaded/TestFlight(dev) builds and "production" for App Store builds.
+[vars]
+APNS_BUNDLE_ID = "com.larsniet.CraftyMobile"
+APNS_ENV = "sandbox"
+
+# Device-token store. Create with:  wrangler kv namespace create DEVICES
+# then paste the returned id below.
+[[kv_namespaces]]
+binding = "DEVICES"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Secrets are NOT stored here — set them with `wrangler secret put`:
+#   APNS_KEY       (paste the full contents of your AuthKey_XXXX.p8)
+#   APNS_KEY_ID    (the 10-char key id)
+#   APNS_TEAM_ID   (3BGHPQ6C3H)
