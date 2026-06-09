@@ -22,7 +22,32 @@ Crafty ──(event)──▶ /hook/<code> ──APNs──▶ phone   (token ne
   Create the key at developer.apple.com → Keys → Apple Push Notifications service.
 - In Xcode: **CraftyMobile** target → Signing & Capabilities → **+ Push Notifications**.
 
-## Deploy (one command)
+## Deploy A — connect GitHub (recommended: push-to-deploy)
+
+In the Cloudflare dashboard → **Workers & Pages → Create → Connect to Git**, pick
+this repo and:
+
+- **Root directory:** `/relay`
+- **Build command:** `npx wrangler deploy`
+- **(non-production branches):** `npx wrangler versions upload`
+
+Every push to your default branch then redeploys automatically — no local tools.
+**But the Git build only deploys code + `[vars]`; you must do these two things once:**
+
+1. **Create the KV namespace and commit its id.** Dashboard → **Storage &
+   Databases → KV → Create** (any name) → copy the **Namespace ID** → paste it
+   into `relay/wrangler.toml` (`id = "…"`) → commit & push. (The id isn't secret.)
+   Until this is set, the build fails with an invalid-KV error.
+2. **Add the secrets to the Worker** (after the first deploy creates it):
+   Worker → **Settings → Variables and Secrets** → add **encrypted secrets**
+   `APNS_KEY` (paste the whole `.p8`), `APNS_KEY_ID`, `APNS_TEAM_ID`. These are
+   **runtime** secrets — *not* Workers *Build* variables — and they persist
+   across deploys. Then re-run the build (push a commit or "Retry").
+
+`APNS_BUNDLE_ID` and `APNS_ENV` come from `wrangler.toml`, so you don't set those
+by hand.
+
+## Deploy B — one command from your machine
 
 ```sh
 cd relay
@@ -31,7 +56,7 @@ cd relay
 
 This installs wrangler, logs you in, creates the KV namespace, stores your
 secrets, and deploys. At the end it prints your relay URL
-(`https://crafty-relay.<subdomain>.workers.dev`).
+(`https://craftymobile-relay.<subdomain>.workers.dev`).
 
 ### …or step by step
 
@@ -48,7 +73,7 @@ npx wrangler deploy
 
 > If your wrangler is v3, the KV command is `npx wrangler kv:namespace create DEVICES`.
 
-Verify: `curl https://crafty-relay.<subdomain>.workers.dev/health` → `{"status":"ok",...}`
+Verify: `curl https://craftymobile-relay.<subdomain>.workers.dev/health` → `{"status":"ok",...}`
 
 ## Connect the app
 

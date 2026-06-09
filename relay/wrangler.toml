@@ -1,4 +1,4 @@
-name = "crafty-relay"
+name = "craftymobile-relay"
 main = "src/worker.js"
 compatibility_date = "2024-11-01"
 
