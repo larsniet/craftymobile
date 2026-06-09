@@ -12,7 +12,7 @@ APNS_ENV = "sandbox"
 # then paste the returned id below.
 [[kv_namespaces]]
 binding = "DEVICES"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "d94ce47a87fc46b38ed276b7a2ee4cb5"
 
 # Secrets are NOT stored here — set them with `wrangler secret put`:
 #   APNS_KEY       (paste the full contents of your AuthKey_XXXX.p8)
